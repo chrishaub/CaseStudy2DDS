@@ -1,3 +1,6 @@
-# CaseStudy2DDS
+# Frito Lay Employee Attrition Analysis
 
-# <iframe width="560" height="315" src="https://www.youtube.com/embed/PwKmUaIO3gA" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+### This is an analysis of employee attrition at Frito Lay
+
+## YouTube Presentation
+https://www.youtube.com/watch?v=PwKmUaIO3gA
