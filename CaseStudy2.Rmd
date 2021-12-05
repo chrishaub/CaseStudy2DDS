@@ -1,0 +1,374 @@
+---
+title: "Case Study 2"
+author: "Haub"
+date: "11/30/2021"
+output: html_document
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+# Call in libraries
+```{r, message=FALSE, warning=FALSE, out.width="100%"}
+
+library(tidyverse)
+library(gridExtra)
+library(class)
+library(usmap)
+library(ggplot2)
+library(foreign)
+library(haven)
+library(ggplot2)
+library(foreign)
+library(ggplot2)
+library(GGally)
+library(haven)
+library(magrittr)
+library(data.table)
+library(dplyr)
+library(plyr)
+library(dplyr)
+library(factoextra)
+library(ggplot2)
+library(ggmap)
+library(nycflights13)
+library(tidyverse)
+library(datasets)
+library(readxl)
+library(tidyverse) 
+library(magrittr)
+library(DataExplorer)
+library(maps)
+library(plotly)
+library(DT)
+library(tidytext)
+library(plyr)
+library(gridExtra)
+library(factoextra)
+library(GGally)
+library(readxl)
+library(tidyverse) 
+library(magrittr)
+library(DataExplorer)
+library(maps)
+library(plotly)
+library(DT)
+library(tidytext)
+library(gridExtra)
+library(factoextra)
+library(GGally)
+library(gridExtra)
+library(graphics)
+library(mice)
+library(PerformanceAnalytics)
+require(PerformanceAnalytics)
+library(MASS)
+library(reshape)
+library(RJSONIO)
+library(jsonlite)
+library(twitteR)
+library(maps)
+library(mapproj)
+library(knitr)
+library(skimr)
+library(shiny)
+library(pct)
+library(scales)
+library(ggpubr)
+library(ISLR)
+library(caret)
+library(rminer)
+
+```
+
+# Load in the files
+```{r}
+Data = read.csv("/Users/chris/OneDrive/Desktop/SMU data science/New folder/MSDS_6306_Doing-Data-Science/CaseStudy2DDS/CaseStudy2-data.csv")
+
+NoAttr = read.csv("/Users/chris/OneDrive/Desktop/SMU data science/New folder/MSDS_6306_Doing-Data-Science/CaseStudy2DDS/CaseStudy2CompSetNoAttrition.csv")
+
+#NoSal = read.csv("/Users/chris/OneDrive/Desktop/SMU data science/New #folder/MSDS_6306_Doing-Data-Science/CaseStudy2DDS/CaseStudy2CompSetNoSalary.csv")
+
+```
+
+# Check for missing values
+```{r}
+# There are no missing values
+sum(is.na(Data))
+(sum(is.na(Data))/prod(dim(df)))*100
+
+```
+
+# Remove variables that are all the same
+```{r}
+Data = subset(Data, select = -c(EmployeeCount, Over18, StandardHours))
+
+```
+
+# Define the variables and change to factors
+```{r}
+cols = c("Attrition", "BusinessTravel", "Department", "Education", 
+         "EnvironmentSatisfaction", "Gender", "JobInvolvement", "JobLevel", 
+         "JobRole", "JobSatisfaction", "MaritalStatus", "OverTime", 
+         "PerformanceRating", "RelationshipSatisfaction", "StockOptionLevel", 
+         "TrainingTimesLastYear", "WorkLifeBalance")
+
+Data[cols] = lapply(Data[cols], factor)
+
+```
+
+# The Overall Attrition Rate
+```{r}
+# There are 870 employees in the data set, Attrition rate is 16.09%, 140 left, 730 stayed
+print(length(Data$Attrition))
+
+print(sum(Data$Attrition == "Yes"))
+print(sum(Data$Attrition == "No"))
+
+quit = (sum(Data$Attrition == "Yes")) / length(Data$Attrition)
+stay = (sum(Data$Attrition == "No")) / length(Data$Attrition)
+print(quit*100)
+
+Data %>% ggplot(aes(x = Attrition, fill = Attrition)) + ggtitle("Employee Attrition Count") + ylab("Employee  Count") + geom_bar(col = "red", fill = "gold") +
+  theme(plot.title = element_text(hjust = 0.5, colour = "red")) + 
+  theme(axis.title.x = element_text(colour = "red"), axis.title.y = element_text(colour = "red"))
+
+Data %>% ggplot(aes(x = Attrition, y = prop.table(stat(count)),
+               label = scales::percent(prop.table(stat(count))))) + 
+  geom_bar(col = "red", fill = "gold") +
+  geom_text(stat = 'count', size = 5) +
+  labs(x ="Employee Attrition", y = "Percentage", title = "Employee Attrition Rate Percentage") +
+  scale_y_continuous(labels = scales::percent) +
+  theme(plot.title = element_text(hjust = 0.5, colour = "red")) + 
+  theme(axis.title.x = element_text(colour = "red"), axis.title.y = element_text(colour = "red"))
+
+```
+
+# Age and Attrition
+```{r}
+# Younger employees are more likely to leave than older employees.
+# As age increases, income increases, could be one reason younger employees leave, to look for more money.
+summary(Data$Age)
+
+# Box plot of attrition for age
+Data %>% ggplot(aes(x = Attrition, y = Age)) + 
+  geom_boxplot(col = "red", fill = "gold") + 
+  labs(x = "Attrition", y = "Age",
+       title = "Attrition for Age") +
+  theme(plot.title = element_text(hjust = 0.5, colour = "red")) + 
+  theme(axis.title.x = element_text(colour = "red"), axis.title.y = element_text(colour = "red"))
+
+# Scatter plot monthly income v. age for attrition
+Data %>% ggplot(aes(x = Age, y = MonthlyIncome)) + 
+  geom_point(col = "gold") + 
+  geom_smooth(method='lm', formula= y~x, se = F, col = "red", size = 1) +
+  labs(x = "Age", y = "Monthly Income",
+       title = "Monthly Income v. Age for Attrition") +
+  facet_wrap( ~ Attrition)
+cor(Data$Age, Data$MonthlyIncome)
+
+```
+
+# Education and Attrition
+```{r}
+# Higher education levels have less attrition
+# The Human Resources education field has the highest rate of attrition.
+# Level 1 education has the highest attrition rate. Level 5, has the lowest attrition rate.
+# Level 5 education has the highest median monthly income.
+
+
+# Bar chart for attrition of education field
+Data %>% ggplot(aes(x = EducationField, fill = Attrition)) +
+  geom_bar(position = "fill") + scale_fill_manual(values=c('gold','red')) +
+  scale_y_continuous(labels = scales::percent) + 
+  labs(x = "Education Field", y = "Attrition",
+       title = "Education Field with Attrition") + 
+   theme(plot.title = element_text(hjust = 0.5, colour = "red")) +
+  theme(axis.title.x = element_text(colour = "red"), axis.title.y = element_text(colour = "red"))
+
+# Bar chart for attrition of education level
+Data$Education = as.factor(Data$Education)
+Data %>% ggplot(aes(x = Education, fill = Attrition)) +
+  geom_bar(position = "fill") + scale_fill_manual(values=c('gold','red')) +
+  scale_y_continuous(labels = scales::percent) + 
+  labs(x = "Education Level", y = "Attrition",
+       title = "Education with Attrition") + 
+   theme(plot.title = element_text(hjust = 0.5, colour = "red")) +
+  theme(axis.title.x = element_text(colour = "red"), axis.title.y = element_text(colour = "red"))
+
+# Box plot for income by education level
+Data %>% ggplot(aes(x = Education, y = MonthlyIncome)) +
+  geom_boxplot(col = "red", fill = "gold") + 
+  labs(x = "Education", y = "Monthly Income",
+       title = "Income Distribution for Education") +
+theme(plot.title = element_text(hjust = 0.5, colour = "red")) +
+  theme(axis.title.x = element_text(colour = "red"), axis.title.y = element_text(colour = "red"))
+
+```
+
+# Job Role and Attrition
+```{r}
+# Sales Representatives have the highest level of attrition.  
+# Managers, then Research Directors have the highest median income.
+
+# Bar plot of job role with attrition
+Data %>% ggplot(aes(x = JobRole, fill = Attrition)) +
+  geom_bar(position = "fill") + scale_fill_manual(values=c('gold','red')) +
+  scale_y_continuous(labels = scales::percent) + 
+  labs(x = "Job Role", y = "Attrition",
+       title = "Job Role with Attrition") + 
+  theme(plot.title = element_text(hjust = 0.5, colour = "red")) +
+  theme(axis.title.x = element_text(colour = "red"), axis.title.y = element_text(colour = "red"))
+
+# Box plot of Monthly Income for Job role
+Data %>% ggplot(aes(x = JobRole, y = MonthlyIncome)) +
+  geom_boxplot(col = "red", fill = "gold") + 
+  labs(x = "Job Role", y = "Monthly Income",
+       title = "Income Distribution by Job Role") +
+theme(plot.title = element_text(hjust = 0.5, colour = "red")) +
+  theme(axis.title.x = element_text(colour = "red"), axis.title.y = element_text(colour = "red"))
+
+# Scatter plot of job satisfaction to job role
+Data %>% ggplot(aes(x = JobSatisfaction, y = JobRole)) + 
+  geom_point(col = "gold") + 
+  geom_smooth(method='lm', formula= y~x, se = F, col = "red", size = 1) +
+  labs(x = "Job Satisfaction", y = "Job Role", 
+       title = "Job Satisfaction % by Job Role") +
+  facet_wrap( ~ JobRole)
+
+```
+
+# Income and Attrition 
+```{r}
+# Higher monthly income results in less attrition. People who make more are less likely to quit.
+# Higher incomes have higher job satisfaction.
+# Income and attrition are correlated.
+
+# Box plot of attrition for age
+Data %>% ggplot(aes(x = Attrition, y = MonthlyIncome)) + 
+  geom_boxplot(col = "red", fill = "gold") + 
+  labs(x = "Attrition", y = "Income",
+       title = "Attrition by Income") +
+  theme(plot.title = element_text(hjust = 0.5, colour = "red")) + 
+  theme(axis.title.x = element_text(colour = "red"), axis.title.y = element_text(colour = "red"))
+
+# Box plot of Monthly Income for Job Satisfaction
+Data %>% ggplot(aes(x = JobSatisfaction, y = MonthlyIncome)) +
+  geom_boxplot(col = "red", fill = "gold") + 
+  labs(x = "Job Satisfaction", y = "Monthly Income",
+       title = "Monthly Income for Job Satisfaction") +
+theme(plot.title = element_text(hjust = 0.5, colour = "red")) +
+  theme(axis.title.x = element_text(colour = "red"), axis.title.y = element_text(colour = "red"))
+
+# Correlation plot
+cols = c("#FFD700", "#f5dfb3")
+Data %>%
+  dplyr::select(Attrition, MonthlyIncome, PercentSalaryHike, MonthlyRate, HourlyRate) %>%
+  GGally::ggpairs(
+    lower = list(
+      continuous = GGally::wrap("points", col = cols[1],alpha=0.6),
+      combo = GGally::wrap("box", fill = "yellow", col ="red")
+    ),
+    upper = list(
+      continuous = GGally::wrap("cor", col = cols[1]),
+      combo = GGally::wrap("facetdensity", col = "red")
+    ),
+    diag = list(
+      continuous = GGally::wrap("barDiag", fill = cols[2], col ="red", bins = 18),
+      discrete = GGally::wrap("barDiag", fill = cols[2], col ="red"))
+  )
+
+```
+
+# Travel and Attrition 
+```{r}
+# Employees who travel the most, are most likely to quit. 
+# Bar plot of employee travel and attrition
+Data %>% ggplot(aes(x = BusinessTravel, fill = Attrition)) +
+  geom_bar(position = "fill") + scale_fill_manual(values=c('gold','red')) +
+  scale_y_continuous(labels = scales::percent) + 
+  labs(x = "Business Travel", y = "Attrition",
+       title = "Business Travel with Attrition") + 
+   theme(plot.title = element_text(hjust = 0.5, colour = "red")) +
+  theme(axis.title.x = element_text(colour = "red"), axis.title.y = element_text(colour = "red"))
+
+```
+
+# Elapsed Time of Service
+```{r}
+# Correlation plot of elapsed time of service
+cols = c("#FFD700", "#f5dfb3")
+Data %>%
+  dplyr::select(Attrition, TotalWorkingYears, YearsAtCompany, YearsInCurrentRole, YearsWithCurrManager, YearsSinceLastPromotion) %>%
+  GGally::ggpairs(
+    lower = list(
+      continuous = GGally::wrap("points", col = cols[1],alpha=0.6),
+      combo = GGally::wrap("box", fill = "yellow", col ="red")
+    ),
+    upper = list(
+      continuous = GGally::wrap("cor", col = cols[1]),
+      combo = GGally::wrap("facetdensity", col = "red")
+    ),
+    diag = list(
+      continuous = GGally::wrap("barDiag", fill = cols[2], col ="red", bins = 18),
+      discrete = GGally::wrap("barDiag", fill = cols[2], col ="red"))
+  )
+
+```
+
+# Correlation
+```{r}
+# Income and years at company are correlated.
+# Pearson correlation test 
+cor.test(Data$YearsAtCompany, Data$MonthlyIncome,
+         method= "pearson",
+         exact=FALSE,
+         alternative="two.side")
+
+ggscatter(Data, x = "YearsAtCompany", y = "MonthlyIncome", 
+          add = "reg.line", conf.int = TRUE, 
+          cor.coef = TRUE, cor.method = "pearson",
+          xlab = "Years at Company", ylab = "Monthly Income")
+
+```
+
+# KNN
+```{r}
+# Accuracy 88% with 95% confidence interval
+# Sensitivity 88%, correctly predict no attrition
+# Specificity 80%, correctly predict attrition
+
+set.seed(51)
+
+finaldf = subset(Data, select = -c(DailyRate, HourlyRate, MonthlyRate, ID, Age, Education))
+
+train.knn = trainControl(
+  method = "repeatedcv",
+  number = 5,
+  repeats = 100,
+  summaryFunction = twoClassSummary,
+  classProbs = TRUE,
+  p = .75
+)
+
+# KNN on Training Set
+
+attrition.knn <- train(
+  Attrition ~ .,
+  data = finaldf,
+  method = "knn",
+  metric = "Spec",
+  trControl = train.knn,
+  preProcess = c("center","scale"),
+  tuneLength = 6
+)
+
+# Adding predictions to df
+finaldf$KNN_Pred <- predict(attrition.knn, newdata = finaldf)
+# creating confusion matrix
+confusionMatrix(table(finaldf$Attrition, finaldf$KNN_Pred))
+
+```
+
